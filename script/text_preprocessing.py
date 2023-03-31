@@ -15,7 +15,8 @@ from bs4 import BeautifulSoup
 
 import textblob.exceptions
 
-subprocess.run(["python", "-m", "spacy", "download", "es_core_news_sm"])
+subprocess.run(["python3", "-m", "spacy", "download", "es_core_news_sm"])
+subprocess.run(["python3", "-m", "spacy", "download", "en_core_web_sm"])
 
 nltk.download('stopwords')
 
