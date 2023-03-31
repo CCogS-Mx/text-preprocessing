@@ -20,7 +20,7 @@ Both of us are doctorate students at the Centro de Investigación en Computació
 Our interests are:
 - Natural Language Processing
 - Artificial Intelligence
-- Computational Lingüistics
+- Computational Linguistics
 - Machine Learning
 - Deep Learning
 - Transformers
