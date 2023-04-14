@@ -63,6 +63,7 @@ class Preprocessing:
   def tweet_preprocessing(self, text):
     clean_text = []
     for word in text.split(' '):
+
       word = '' if word.startswith('@') and len(word) > 1 else word
       word = '' if '@' in word else word
       word = '' if word.startswith('RT') and len(word) > 1  else word
@@ -71,6 +72,29 @@ class Preprocessing:
       word = '' if word.startswith('_URL_') else word
       word = '' if word.startswith('_HASHTAG_') else word
       word = '' if word.startswith('rt') else word
+
+      clean_text.append(word)
+
+    return ' '.join(clean_text)
+  
+  def tag_twitter_entities(self, text):
+    clean_text = []
+
+    for word in text.split(' '):
+
+      word = '' if word.startswith('@') and len(word) > 1 else word
+      word = '' if '@' in word else word
+      word = '' if word.startswith('_USER_') else word
+
+      word = 'RT' if word.startswith('rt') else word
+      word = 'RT' if word.startswith('RT') else word
+
+      word = 'URL' if word.startswith('http') else word
+      word = 'URL' if word.startswith('_URL_') else word
+      word = 'URL' if word == 'url' else word
+
+      word = 'HASHTAG' if word.startswith('#') and len(word) >1 else word
+      word = 'HASHTAG' if word.startswith('_HASHTAG_') else word
 
       clean_text.append(word)
 
@@ -157,8 +181,9 @@ class Preprocessing:
 
     return text
   
-  def preprocess_dataframe(self, data, column, tweet, remove_stop_words,
-                          lemmatize, translate_emojis):
+  def preprocess_dataframe(self, data, column, tweet, 
+                           tweet_tags, remove_stop_words,
+                           lemmatize, translate_emojis):
     # Emoji to text
     text_emoji = lambda x: self.emoji_to_text(x)
 
@@ -170,6 +195,9 @@ class Preprocessing:
 
     # Remove Tweeter entities
     remove_tweeter_entities = lambda x: self.tweet_preprocessing(x)
+
+    # Tag twitter entities
+    tag_tweets = lambda x: self.tag_twitter_entities(x)
 
     # Change html entities
     html_entities = lambda x: self.change_html_entities(x)
@@ -217,15 +245,18 @@ class Preprocessing:
     data[column] = data[column].map(detect_link).map(html_entities).\
                                 map(remove_line_brk)
 
+    data[column] = data[column].map(lower_text)
+
     if tweet:
-      data[column] = data[column].map(split_hashtag)
-      data[column] = data[column].map(remove_tweeter_entities)
-    
+      if tweet_tags:
+        data[column] = data[column].map(tag_tweets)
+      else:
+        data[column] = data[column].map(split_hashtag)
+        data[column] = data[column].map(remove_tweeter_entities)
 
     if translate_emojis:
       data[column] = data[column].map(text_emoji)
 
-    data[column] = data[column].map(lower_text)
 
     if remove_stop_words == True:
       data[column] = data[column].map(remove_stopword)
@@ -247,8 +278,10 @@ class Preprocessing:
 
     return data
   
-  def preprocess_text(self, texts, tweet, remove_stop_words, 
-                      lemmatize, translate_emojis):
+  def preprocess_text(self, texts, tweet,
+                      remove_stop_words, 
+                      tweet_tags, lemmatize,
+                      translate_emojis):
 
     clean_texts = []
 
@@ -260,16 +293,17 @@ class Preprocessing:
 
       text = self.remove_line_breaks(text)
 
+      text = self.turn_lowercase(text)
+
       if tweet:
-        text = self.split_hashtags(text)
-
-        text = self.tweet_preprocessing(text)
+        if tweet_tags:
+          text = self.tag_twitter_entities(text)
+        else:
+          text = self.split_hashtags(text)
+          text = self.tweet_preprocessing(text)
       
-
       if translate_emojis:
         text = self.emoji_to_text(text)
-
-      text = self.turn_lowercase(text)
 
       if remove_stop_words == True:
         text = self.remove_stopwords(text)
@@ -300,9 +334,13 @@ class Preprocessing:
 
     return clean_texts
 
-  def main_preprocess(self, data, column= None, tweet = False, 
-                      remove_stop_words = False, lemmatize = False,
+  def main_preprocess(self, data, column= None,
+                      tweet = False,
+                      tweet_tags = False,
+                      remove_stop_words = False,
+                      lemmatize = False,
                       translate_emojis = False):
+    
     if type(data) == str:
       data = [data]
   
@@ -311,14 +349,16 @@ class Preprocessing:
     if type(data) == pd.core.frame.DataFrame:
       if column != None:
         data = self.preprocess_dataframe(data_copy, column, tweet, 
-                                       remove_stop_words, lemmatize, 
-                                       translate_emojis)
+                                       tweet_tags, remove_stop_words,
+                                       lemmatize, translate_emojis)
       else:
+
         print("ERROR: to preprocess string elements in a DataFrame Object\n'column' must have a string value to indicate the column where\texts are located")
     
     else:
-      data = self.preprocess_text(data_copy, tweet, 
-                                  remove_stop_words, 
-                                  lemmatize, translate_emojis)
+
+      data = self.preprocess_text(data_copy, tweet, tweet_tags,
+                                  remove_stop_words, lemmatize,
+                                  translate_emojis)
     
     return data
