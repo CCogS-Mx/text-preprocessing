@@ -1,10 +1,9 @@
+# Installing subprocess
 import subprocess
-subprocess.run(["python3", "-m", "pip", "install", "nltk==3.8.1"])
-subprocess.run(["python3", "-m", "pip", "install", "spacy==3.5.2"])
-subprocess.run(["python3", "-m", "pip", "install", "emoji==2.2.0"])
-subprocess.run(["python3", "-m", "pip", "install", "pandas==2.0.0"])
-subprocess.run(["python3", "-m", "pip", "install", "bs4==0.0.1"])
-subprocess.run(["python3", "-m", "pip", "install", "textblob==0.17.1"])
+subprocess.run(["python3", "-m", "pip", "install", 
+                "nltk==3.8.1", "spacy==3.5.2",
+                "emoji==2.2.0", "pandas==2.0.0",
+                "bs4==0.0.1", "textblob==0.17.1"])
 
 #default python dependencies
 import pickle
