@@ -1,20 +1,28 @@
-import nltk
+import subprocess
+subprocess.run(["python3", "-m", "pip", "install", "nltk==3.8.1"])
+subprocess.run(["python3", "-m", "pip", "install", "spacy==3.5.2"])
+subprocess.run(["python3", "-m", "pip", "install", "emoji==2.2.0"])
+subprocess.run(["python3", "-m", "pip", "install", "pandas==2.0.0"])
+subprocess.run(["python3", "-m", "pip", "install", "bs4==0.0.1"])
+subprocess.run(["python3", "-m", "pip", "install", "textblob==0.17.1"])
+
+#default python dependencies
 import pickle
 import re
 import string
+
+#installed dependencies
+import nltk
 import spacy
-import subprocess
-
+import emoji
 import pandas as pd
-
-from nltk.corpus import stopwords
-
+from bs4 import BeautifulSoup
 from textblob import TextBlob
 
-from bs4 import BeautifulSoup
-
+from nltk.corpus import stopwords
 import textblob.exceptions
 
+# Downloading the pipelines for spacy in english and spanish
 subprocess.run(["python3", "-m", "spacy", "download", "es_core_news_sm"])
 subprocess.run(["python3", "-m", "spacy", "download", "en_core_web_sm"])
 
@@ -43,14 +51,6 @@ class Preprocessing:
     
     return ' '.join(lemmas)
 
-
-  def load_emoji_dict(self, path):
-    with open(path, 'rb') as fp:
-      emojis = pickle.load(fp)
-    emojis = {v: k for k, v in emojis.items()}
-
-    return emojis
-
   def remove_stopwords(self, text):
     stop_words = self.stopwords_languaje()
     clean_text = []
@@ -77,28 +77,16 @@ class Preprocessing:
 
     return ' '.join(clean_text)
 
-  def emoji_to_text(self, text, emoji_path):
-    emojis = self.load_emoji_dict(emoji_path)
+  def emoji_to_text(self, text):
     clean_text = []
-
-    for emot in emojis:
-      text = re.sub(r'('+emot+')', 
-            ' '.join(emojis[emot].replace(',', '').replace(':', '').split()), 
-            text)
-    
-    tokens = text.split()
-
-    for token in tokens:
-      if token.count('_') > 0:
-        token = token.split('_')
-        token = ' '.join(token)
-        token = self.translate(token)
+    for word in emoji.demojize(text, language=self.lang, delimiters= ("&&&&&", " ")).split(" "):
+      if word.startswith("&&&&&"):
+        word = re.sub("&&&&&", "", word)
+        word = re.sub("_", " ", word)
       
-      clean_text.append(token)
-
-    final_text = ' '.join(clean_text)
-
-    return final_text
+      clean_text.append(word)
+    
+    return ' '.join(clean_text)
   
   def normalize(slef, text):
     replacements = [
@@ -116,8 +104,13 @@ class Preprocessing:
     return text
 
   def split_hashtags(self, text):
-    text = re.sub('#', '', text)
-    return re.sub(r'(?<![A-Z\W])(?=[A-Z])', ' ', text)
+    clean_text = []
+    for word in text.split(' '):
+      if word.startswith('#'):
+        word = re.sub('#', '', word)
+        word = re.sub(r'(?<![A-Z\W])(?=[A-Z])', ' ', word)
+      clean_text.append(word)
+    return ' '.join(clean_text)
 
   def detect_http(self, text):
     return re.sub(r'(?<!http)(?=http)', ' ', text)
@@ -166,9 +159,9 @@ class Preprocessing:
     return text
   
   def preprocess_dataframe(self, data, column, tweet, remove_stop_words,
-                          lemmatize, emoji_path):
+                          lemmatize, translate_emojis):
     # Emoji to text
-    text_emoji = lambda x: self.emoji_to_text(x, emoji_path)
+    text_emoji = lambda x: self.emoji_to_text(x)
 
     # Detect links
     detect_link = lambda x: self.detect_http(x)
@@ -230,7 +223,7 @@ class Preprocessing:
       data[column] = data[column].map(remove_tweeter_entities)
     
 
-    if emoji_path != None:
+    if translate_emojis:
       data[column] = data[column].map(text_emoji)
 
     data[column] = data[column].map(lower_text)
@@ -256,7 +249,7 @@ class Preprocessing:
     return data
   
   def preprocess_text(self, texts, tweet, remove_stop_words, 
-                      lemmatize, emoji_path):
+                      lemmatize, translate_emojis):
 
     clean_texts = []
 
@@ -274,8 +267,8 @@ class Preprocessing:
         text = self.tweet_preprocessing(text)
       
 
-      if emoji_path != None:
-        text = self.emoji_to_text(text, emoji_path)
+      if translate_emojis:
+        text = self.emoji_to_text(text)
 
       text = self.turn_lowercase(text)
 
@@ -309,17 +302,24 @@ class Preprocessing:
     return clean_texts
 
   def main_preprocess(self, data, column= None, tweet = False, 
-                      remove_stop_words = False, is_dataframe= False, 
-                      lemmatize = False, emoji_path = None):
+                      remove_stop_words = False, lemmatize = False,
+                      translate_emojis = False):
+    if type(data) == str:
+      data = [data]
+  
     data_copy = data.copy()
-    if is_dataframe == True:
-      data = self.preprocess_dataframe(data_copy, column, tweet, 
+
+    if type(data) == pd.core.frame.DataFrame:
+      if column != None:
+        data = self.preprocess_dataframe(data_copy, column, tweet, 
                                        remove_stop_words, lemmatize, 
-                                       emoji_path)
+                                       translate_emojis)
+      else:
+        print("ERROR: to preprocess string elements in a DataFrame Object\n'column' must have a string value to indicate the column where\texts are located")
     
     else:
       data = self.preprocess_text(data_copy, tweet, 
                                   remove_stop_words, 
-                                  lemmatize, emoji_path)
+                                  lemmatize, translate_emojis)
     
     return data
