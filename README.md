@@ -6,9 +6,12 @@ This repossitory contains a single script, developed by:
 ---
 
 ## Required dependencies:
+The following dependendencies will be installed on your computer or the virtual enviroment you are working with.
+
 - pandas
 - nltk
 - spacy
+- emoji
 - bs4
 - textblob
 
@@ -28,7 +31,7 @@ Our interests are:
 
 ---
 
-## Credit
+## Credit for the authors
 
 Meanwhile, if you use it to develop your research or a part of it, please give credit to the developers as:
 
@@ -51,3 +54,12 @@ Or something similar where the url to the repository is mentioned.
 
 
 Note: This script and the example section will be upgraded with new features.
+
+## References and aknowledgements
+
+1. The pandas development team. (2023). pandas-dev/pandas: Pandas (v2.0.0). Zenodo. https://doi.org/10.5281/zenodo.7794821
+2. Steven Bird, Ewan Klein, and Edward Loper (2009). Natural Language Processing with Python. O’Reilly Media Inc. https://www.nltk.org/book/
+3. Honnibal, M., Montani, I., Van Landeghem, S., & Boyd, A. (2020). spaCy: Industrial-strength Natural Language Processing in Python. https://doi.org/10.5281/zenodo.1212303
+4. Python Package Index - PyPI. (n.d.). Python Software Fundation. Retrieved from https://pypi.org/project/emoji/
+5. Python Package Index - PyPI. (n.d.). Python Software Fundation. Retrieved from https://pypi.org/project/beautifulsoup4/
+6. Loria, S. (2020). *TextBlob: Simplified Text Processing*. TextBlob Documentation. https://textblob.readthedocs.io/en/dev/

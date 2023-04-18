@@ -341,12 +341,14 @@ class Preprocessing:
                       lemmatize = False,
                       translate_emojis = False):
     
-    if type(data) == str:
+    data_type = type(data)
+
+    if data_type == str:
       data = [data]
   
     data_copy = data.copy()
 
-    if type(data) == pd.core.frame.DataFrame:
+    if data_type == pd.core.frame.DataFrame:
       if column != None:
         data = self.preprocess_dataframe(data_copy, column, tweet, 
                                        tweet_tags, remove_stop_words,
@@ -358,7 +360,11 @@ class Preprocessing:
     else:
 
       data = self.preprocess_text(data_copy, tweet, tweet_tags,
-                                  remove_stop_words, lemmatize,
-                                  translate_emojis)
+                                    remove_stop_words, lemmatize,
+                                    translate_emojis)
+
+      if data_type == str:
+        data = data[0]
+
     
     return data
