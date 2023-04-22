@@ -118,7 +118,6 @@ class Preprocessing:
         ("í", "i"),
         ("ó", "o"),
         ("ú", "u"),
-        ("ñ", "n")
     ]
   
     for original, replacement in replacements:
@@ -156,8 +155,9 @@ class Preprocessing:
   def remove_line_breaks(self, text):
     return ' '.join(text.splitlines())
 
-  def remove_non_ascii(self, text):
-    return re.sub(r'[^\x00-\x7fre]',r' ', text)
+  def remove_non_ascii(self, text, whitelist):
+    #return re.sub(r'[^\x00-\x7fre]',r' ', text)
+    return ''.join([i if ord(i) < 128 or i in whitelist else ' ' for t in text for i in t])
   
   def remove_blank_spaces(self, text):
     return ' '.join(text.split())
@@ -165,8 +165,14 @@ class Preprocessing:
   def crop_repeated_characters(self, text):
     return re.sub(r'(.)\1+', r'\1\1', text)
 
-  def remove_punctuation(self, text):
-    return re.sub('[%s]' % re.escape(string.punctuation), ' ', text)
+  def remove_punctuation(self, text, whitelist):
+    punkt = ''
+
+    for pun in string.punctuation:
+      if pun not in whitelist:
+        punkt += pun
+
+    return re.sub('[%s]' % re.escape(punkt), ' ', text)
 
   def translate(self, text):
     try:
@@ -183,7 +189,8 @@ class Preprocessing:
   
   def preprocess_dataframe(self, data, column, tweet, 
                            tweet_tags, remove_stop_words,
-                           lemmatize, translate_emojis):
+                           lemmatize, translate_emojis,
+                           whitelist):
     # Emoji to text
     text_emoji = lambda x: self.emoji_to_text(x)
 
@@ -206,7 +213,7 @@ class Preprocessing:
     lower_text = lambda x: self.turn_lowercase(x)
 
     # Remove punctuation
-    remove_punct = lambda x: self.remove_punctuation(x)
+    remove_punct = lambda x: self.remove_punctuation(x, whitelist)
 
     # Remove apostrophes
     remove_apostroph = lambda x: self.remove_apostrophes(x)
@@ -218,7 +225,7 @@ class Preprocessing:
     remove_alphanum_words = lambda x: self.remove_alphanumceric_words(x)
 
     # Remove non ASCII characters
-    remove_non_asci = lambda x: self.remove_non_ascii(x)
+    remove_non_asci = lambda x: self.remove_non_ascii(x, whitelist)
 
     # Normalaize text
     normalize_text = lambda x: self.normalize(x)
@@ -281,7 +288,8 @@ class Preprocessing:
   def preprocess_text(self, texts, tweet,
                       remove_stop_words, 
                       tweet_tags, lemmatize,
-                      translate_emojis):
+                      translate_emojis, 
+                      whitelist):
 
     clean_texts = []
 
@@ -305,7 +313,7 @@ class Preprocessing:
       if translate_emojis:
         text = self.emoji_to_text(text)
 
-      if remove_stop_words == True:
+      if remove_stop_words:
         text = self.remove_stopwords(text)
 
       if lemmatize:
@@ -339,7 +347,8 @@ class Preprocessing:
                       tweet_tags = False,
                       remove_stop_words = False,
                       lemmatize = False,
-                      translate_emojis = False):
+                      translate_emojis = False,
+                      whitelist = ""):
     
     data_type = type(data)
 
@@ -350,18 +359,27 @@ class Preprocessing:
 
     if data_type == pd.core.frame.DataFrame:
       if column != None:
-        data = self.preprocess_dataframe(data_copy, column, tweet, 
-                                       tweet_tags, remove_stop_words,
-                                       lemmatize, translate_emojis)
+        data = self.preprocess_dataframe(data_copy,
+                                         column,
+                                         tweet, 
+                                         tweet_tags,
+                                         remove_stop_words,
+                                         lemmatize,
+                                         translate_emojis, 
+                                         whitelist)
       else:
 
         print("ERROR: to preprocess string elements in a DataFrame Object\n'column' must have a string value to indicate the column where\texts are located")
     
     else:
 
-      data = self.preprocess_text(data_copy, tweet, tweet_tags,
-                                    remove_stop_words, lemmatize,
-                                    translate_emojis)
+      data = self.preprocess_text(data_copy, 
+                                  tweet, 
+                                  remove_stop_words,
+                                  tweet_tags,
+                                  lemmatize,
+                                  translate_emojis,
+                                  whitelist)
 
       if data_type == str:
         data = data[0]
