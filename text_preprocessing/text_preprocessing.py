@@ -324,7 +324,7 @@ class Preprocessing:
 
       text = self.normalize(text)
 
-      text = self.remove_punctuation(text)
+      text = self.remove_punctuation(text, whitelist)
 
       text = self.crop_repeated_characters(text)
 
@@ -334,7 +334,7 @@ class Preprocessing:
 
       text = self.remove_slaches(text)
 
-      text = self.remove_non_ascii(text)
+      text = self.remove_non_ascii(text, whitelist)
 
       text = self.remove_blank_spaces(text)
 
