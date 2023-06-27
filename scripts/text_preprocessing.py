@@ -252,7 +252,6 @@ class Preprocessing:
     data[column] = data[column].map(detect_link).map(html_entities).\
                                 map(remove_line_brk)
 
-    data[column] = data[column].map(lower_text)
 
     if tweet:
       if tweet_tags:
@@ -274,7 +273,8 @@ class Preprocessing:
         data[column] = data[column].map(remove_stopword)
     
 
-    data[column] = data[column].map(normalize_text).\
+    data[column] = data[column].map(lower_text).\
+                                map(normalize_text).\
                                 map(remove_punct).\
                                 map(crop_repeating_chars).\
                                 map(remove_alphanum_words).\
