@@ -82,9 +82,9 @@ class Preprocessing:
 
     for word in text.split(' '):
 
-      word = '' if word.startswith('@') and len(word) > 1 else word
-      word = '' if '@' in word else word
-      word = '' if word.startswith('_USER_') else word
+      word = 'USER' if word.startswith('@') and len(word) > 2 else word
+      word = 'USER' if '@' in word else word
+      word = 'USER' if word.startswith('_USER_') else word
 
       word = 'RT' if word.startswith('rt') else word
       word = 'RT' if word.startswith('RT') else word
@@ -250,7 +250,7 @@ class Preprocessing:
 
     # Apply functions
     data[column] = data[column].map(detect_link).map(html_entities).\
-                                map(remove_line_brk)
+                                map(remove_line_brk).map(lower_text)
 
 
     if tweet:
@@ -273,8 +273,7 @@ class Preprocessing:
         data[column] = data[column].map(remove_stopword)
     
 
-    data[column] = data[column].map(lower_text).\
-                                map(normalize_text).\
+    data[column] = data[column].map(normalize_text).\
                                 map(remove_punct).\
                                 map(crop_repeating_chars).\
                                 map(remove_alphanum_words).\
