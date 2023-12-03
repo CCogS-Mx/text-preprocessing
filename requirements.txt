@@ -1,0 +1,6 @@
+pandas
+nltk
+spacy
+emoji
+bs4
+textblob
