@@ -136,6 +136,15 @@ class Preprocessing:
 
   def detect_http(self, text):
     return re.sub(r'(?<!http)(?=http)', ' ', text)
+  
+  def remove_links(self, text):
+    clean_text = []
+    for word in text.split(' '):
+      word = '' if word.startswith('http') else word
+    
+      clean_text.append(word)
+
+    return ' '.join(clean_text)
 
   def change_html_entities(self, text):
     return re.sub(r'<.*?>', '', text)
@@ -203,6 +212,9 @@ class Preprocessing:
     # Remove Tweeter entities
     remove_tweeter_entities = lambda x: self.tweet_preprocessing(x)
 
+    # Remove links
+    remove_http = lambda x: self.remove_links(x)
+
     # Tag twitter entities
     tag_tweets = lambda x: self.tag_twitter_entities(x)
 
@@ -249,7 +261,7 @@ class Preprocessing:
     translate_emoji = lambda x: self.translate(x)
 
     # Apply functions
-    data[column] = data[column].map(detect_link).map(html_entities).\
+    data[column] = data[column].map(detect_link).map(remove_http).map(html_entities).\
                                 map(remove_line_brk).map(lower_text)
 
 
@@ -295,6 +307,8 @@ class Preprocessing:
     for text in texts:
 
       text = self.detect_http(text)
+
+      text = self.remove_links(text)
 
       text = self.change_html_entities(text)
 
