@@ -136,6 +136,15 @@ class Preprocessing:
 
   def detect_http(self, text):
     return re.sub(r'(?<!http)(?=http)', ' ', text)
+  
+  def remove_links(self, text):
+    clean_text = []
+    for word in text.split(' '):
+      word = '' if word.startswith('http') else word
+    
+      clean_text.append(word)
+
+    return ' '.join(clean_text)
 
   def change_html_entities(self, text):
     return re.sub(r'<.*?>', '', text)
@@ -189,6 +198,7 @@ class Preprocessing:
   
   def preprocess_dataframe(self, data, column, tweet, 
                            tweet_tags, remove_stop_words,
+                           remove_apostrophes,
                            lemmatize, translate_emojis,
                            whitelist):
     # Emoji to text
@@ -202,6 +212,9 @@ class Preprocessing:
 
     # Remove Tweeter entities
     remove_tweeter_entities = lambda x: self.tweet_preprocessing(x)
+
+    # Remove links
+    remove_http = lambda x: self.remove_links(x)
 
     # Tag twitter entities
     tag_tweets = lambda x: self.tag_twitter_entities(x)
@@ -249,7 +262,7 @@ class Preprocessing:
     translate_emoji = lambda x: self.translate(x)
 
     # Apply functions
-    data[column] = data[column].map(detect_link).map(html_entities).\
+    data[column] = data[column].map(detect_link).map(remove_http).map(html_entities).\
                                 map(remove_line_brk).map(lower_text)
 
 
@@ -272,12 +285,14 @@ class Preprocessing:
       if remove_stop_words == True:
         data[column] = data[column].map(remove_stopword)
     
+    if remove_apostrophes:
 
-    data[column] = data[column].map(normalize_text).\
-                                map(remove_punct).\
+      data[column] = data[column].map(normalize_text).\
+                                map(remove_apostroph)
+      
+    data[column] = data[column].map(remove_punct).\
                                 map(crop_repeating_chars).\
                                 map(remove_alphanum_words).\
-                                map(remove_apostroph).\
                                 map(remove_inv_slaches).\
                                 map(remove_non_asci).\
                                 map(remove_spaces)
@@ -285,8 +300,10 @@ class Preprocessing:
     return data
   
   def preprocess_text(self, texts, tweet,
+                      tweet_tags,
                       remove_stop_words, 
-                      tweet_tags, lemmatize,
+                      remove_apostrophes,
+                      lemmatize,
                       translate_emojis, 
                       whitelist):
 
@@ -295,6 +312,8 @@ class Preprocessing:
     for text in texts:
 
       text = self.detect_http(text)
+
+      text = self.remove_links(text)
 
       text = self.change_html_entities(text)
 
@@ -321,7 +340,10 @@ class Preprocessing:
         if remove_stop_words:
           text = self.remove_stopwords(text)
 
-      text = self.normalize(text)
+      if remove_apostrophes:
+
+        text = self.normalize(text)
+        text = self.remove_apostrophes(text)
 
       text = self.remove_punctuation(text, whitelist)
 
@@ -329,7 +351,6 @@ class Preprocessing:
 
       text = self.remove_alphanumceric_words(text)
 
-      text = self.remove_apostrophes(text)
 
       text = self.remove_slaches(text)
 
@@ -345,6 +366,7 @@ class Preprocessing:
                       tweet = False,
                       tweet_tags = False,
                       remove_stop_words = False,
+                      remove_apostrophes = False,
                       lemmatize = False,
                       translate_emojis = False,
                       whitelist = ""):
@@ -363,6 +385,7 @@ class Preprocessing:
                                          tweet, 
                                          tweet_tags,
                                          remove_stop_words,
+                                         remove_apostrophes,
                                          lemmatize,
                                          translate_emojis, 
                                          whitelist)
@@ -372,10 +395,11 @@ class Preprocessing:
     
     else:
 
-      data = self.preprocess_text(data_copy, 
-                                  tweet, 
-                                  remove_stop_words,
+      data = self.preprocess_text(data_copy,
+                                  tweet,
                                   tweet_tags,
+                                  remove_stop_words,
+                                  remove_apostrophes,
                                   lemmatize,
                                   translate_emojis,
                                   whitelist)
